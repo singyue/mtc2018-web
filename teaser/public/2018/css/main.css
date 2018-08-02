@@ -27,6 +27,14 @@ body {
   text-decoration: none;
 }
 
+.-hoverAnime {
+  transition-duration: 0.3s;
+}
+
+.-hoverAnime:hover {
+  opacity: 0.5;
+}
+
 .Button__Icon {
   margin-left: 8px;
 }
