@@ -1,0 +1,12 @@
+{
+  "name": "mtc-teaser",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "dev": "lite-server"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "lite-server": "^2.4.0"
+  }
+}
