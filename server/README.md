@@ -37,3 +37,17 @@ $ docker build -t mtcserver .
 $ docker run -it -p 8080:8080 mtcserver
 $ open http://localhost:8080/
 ```
+
+yoはメルカリ社内で試行錯誤中のSpanner用ライブラリです。
+OSSになるといいなと思っていますが今のところクローズドです。
+yoは実行時には必要がないのと、生成されるソースコードはリポジトリにコミットするのでコマンドのバイナリが手に入らなくても短期的には問題ありません。
+
+```
+# yoを実行して権限がないエラーが出る時
+$ yo $PROJECT_NAME $INSTANCE_NAME $DATABASE_NAME -o models
+error: spanner: code = "Unknown", desc = "dialing fails for channel[0], google: could not find default credentials. See https://developers.google.com/accounts/docs/application-default-credentials for more information."
+
+# SpannerのあるGCPプロジェクトに権限を持っていればこれでごまかせる
+#   or https://cloud.google.com/docs/authentication/production
+$ gcloud auth application-default login
+```
