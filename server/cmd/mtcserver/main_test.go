@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -14,18 +15,71 @@ import (
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/mocktracer"
 )
 
-func TestTrace(t *testing.T) {
+func TestRunServer_StopCancel(t *testing.T) {
+	port := 10001
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	resCh := make(chan error, 1)
+	go func() {
+		resCh <- runServer(ctx, port, zap.NewNop())
+	}()
+
+	time.Sleep(100 * time.Millisecond)
+
+	url := fmt.Sprintf("http://localhost:%d/", port)
+	res, err := http.Get(url)
+	require.NoError(t, err)
+	res.Body.Close()
+
+	cancel()
+
+	timer := time.NewTimer(time.Second)
+	defer timer.Stop()
+
+	select {
+	case <-timer.C:
+		t.Fatalf("timeout")
+	case err := <-resCh:
+		require.NoError(t, err, "must not return error")
+	}
+}
+
+func TestRunServer_StopError(t *testing.T) {
+	port := -1
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	resCh := make(chan error, 1)
+	go func() {
+		resCh <- runServer(ctx, port, zap.NewNop())
+	}()
+
+	select {
+	case <-ctx.Done():
+		t.Fatalf("timeout")
+	case err := <-resCh:
+		require.Error(t, err, "must return error")
+	}
+}
+
+func TestRunserver_Trace(t *testing.T) {
 	mt := mocktracer.Start()
 	defer mt.Stop()
 
 	port := 10000
 	logger := zap.NewNop()
 
-	go runServer(port, logger) // never stop
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	go runServer(ctx, port, logger)
 
 	time.Sleep(100 * time.Millisecond)
 
-	t.Run("Trace", func(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
 		url := fmt.Sprintf("http://localhost:%d/", port)
 		res, err := http.Get(url)
 		require.NoError(t, err)
